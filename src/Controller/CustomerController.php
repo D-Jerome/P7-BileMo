@@ -10,6 +10,9 @@ use App\Repository\CustomerRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,13 +24,24 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 /**
  * class CustomerController.
  */
-#[Route('/api/customers')]
 class CustomerController extends AbstractController
 {
     /**
      * Get all Customers.
      */
-    #[Route(name: 'app_customers_collection_get', methods: ['GET'])]
+    #[Route('/api/customers', name: 'app_customers_collection_get', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Return list of all customers',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+        )
+    )
+    ]
+    #[OA\Tag(name: 'List')]
+    #[Security(name: 'Bearer')]
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
     public function collection(
         Request $request,
@@ -60,7 +74,7 @@ class CustomerController extends AbstractController
     /**
      * Get One Customer by Id.
      */
-    #[Route('/{id}', name: 'app_customers_item_get', methods: ['GET'])]
+    #[Route('/api/customers/{id}', name: 'app_customers_item_get', methods: ['GET'])]
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
     public function item(
         Customer $customer,
@@ -98,7 +112,7 @@ class CustomerController extends AbstractController
     /**
      * Create a new Customer.
      */
-    #[Route(name: 'app_customers_collection_post', methods: ['POST'])]
+    #[Route('/api/customers', name: 'app_customers_collection_post', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     public function post(
         Request $request,
@@ -144,7 +158,7 @@ class CustomerController extends AbstractController
     /**
      * Update Customer.
      */
-    #[Route('/{id}', name: 'app_customers_item_put', methods: ['PUT'])]
+    #[Route('/api/customers/{id}', name: 'app_customers_item_put', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     public function put(
         Customer $currentCustomer,
@@ -181,7 +195,7 @@ class CustomerController extends AbstractController
     /**
      * Delete One Customer by Id.
      */
-    #[Route('/{id}', name: 'app_customers_item_delete', methods: ['DELETE'])]
+    #[Route('/api/customers/{id}', name: 'app_customers_item_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     public function delete(
         Customer $customer,

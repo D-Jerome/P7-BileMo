@@ -9,6 +9,8 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +30,29 @@ class UserController extends AbstractController
      * Get all Users.
      */
     #[Route(name: 'app_users_collection_get', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Return list of users',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+        )
+    )
+    ]
+    #[OA\Parameter(
+        name: 'page',
+        in: 'query',
+        description: 'Page to reach',
+        schema: new OA\Schema(type: 'int')
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'Number of items by page',
+        schema: new OA\Schema(type: 'int')
+    )]
+    #[OA\Tag(name: 'Users')]
     public function collection(
         Request $request,
         UserRepository $userRepository,
@@ -65,6 +90,16 @@ class UserController extends AbstractController
      * Get One User by Id.
      */
     #[Route('/{id}', name: 'app_users_item_get', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Return User details',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Users')]
     public function item(
         User $user,
         SerializerInterface $serializer
@@ -101,6 +136,16 @@ class UserController extends AbstractController
      * Create a new User.
      */
     #[Route(name: 'app_users_collection_post', methods: ['POST'])]
+    #[OA\Response(
+        response: 201,
+        description: 'Return user created',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Users')]
     public function post(
         Request $request,
         SerializerInterface $serializer,
@@ -160,6 +205,16 @@ class UserController extends AbstractController
      * Update User.
      */
     #[Route('/{id}', name: 'app_users_item_put', methods: ['PUT'])]
+    #[OA\Response(
+        response: 204,
+        description: 'No Return',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Users')]
     public function put(
         User $currentUser,
         Request $request,
@@ -218,6 +273,16 @@ class UserController extends AbstractController
      * Delete One User by Id.
      */
     #[Route('/{id}', name: 'app_users_item_delete', methods: ['DELETE'])]
+    #[OA\Response(
+        response: 204,
+        description: 'No Return',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Users')]
     public function delete(
         User $user,
         EntityManagerInterface $em

@@ -14,9 +14,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @Hateoas\Relation(
- *      "Userslist",
+ *      "Productslist",
  *      href = @Hateoas\Route(
- *          "app_users_collection_get",
+ *          "app_products_collection_get",
  *          parameters = {  }
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
@@ -24,7 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * * @Hateoas\Relation(
  *      "delete",
  *      href = @Hateoas\Route(
- *          "app_customers_item_delete",
+ *          "app_products_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @Hateoas\Relation(
  *      "update",
  *      href = @Hateoas\Route(
- *          "app_customers_item_update",
+ *          "app_products_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),

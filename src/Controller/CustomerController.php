@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
-use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,15 +23,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 /**
  * class CustomerController.
  */
+#[Route('/api/customers')]
 class CustomerController extends AbstractController
 {
     /**
      * Get all Customers.
      */
-    #[Route('/api/customers', name: 'app_customers_collection_get', methods: ['GET'])]
+    #[Route(name: 'app_customers_collection_get', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: 'Return list of all customers',
+        description: 'Return list of customers',
 
         content: new OA\JsonContent(
             type: 'array',
@@ -40,8 +40,19 @@ class CustomerController extends AbstractController
         )
     )
     ]
-    #[OA\Tag(name: 'List')]
-    #[Security(name: 'Bearer')]
+    #[OA\Parameter(
+        name: 'page',
+        in: 'query',
+        description: 'Page to reach',
+        schema: new OA\Schema(type: 'int')
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'Number of items by page',
+        schema: new OA\Schema(type: 'int')
+    )]
+    #[OA\Tag(name: 'Customers')]
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
     public function collection(
         Request $request,
@@ -74,8 +85,18 @@ class CustomerController extends AbstractController
     /**
      * Get One Customer by Id.
      */
-    #[Route('/api/customers/{id}', name: 'app_customers_item_get', methods: ['GET'])]
+    #[Route('/{id}', name: 'app_customers_item_get', methods: ['GET'])]
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 200,
+        description: 'Customer details',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Customers')]
     public function item(
         Customer $customer,
         SerializerInterface $serializer
@@ -112,8 +133,18 @@ class CustomerController extends AbstractController
     /**
      * Create a new Customer.
      */
-    #[Route('/api/customers', name: 'app_customers_collection_post', methods: ['POST'])]
+    #[Route(name: 'app_customers_collection_post', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 201,
+        description: 'Return customer created',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Customers')]
     public function post(
         Request $request,
         SerializerInterface $serializer,
@@ -158,8 +189,18 @@ class CustomerController extends AbstractController
     /**
      * Update Customer.
      */
-    #[Route('/api/customers/{id}', name: 'app_customers_item_put', methods: ['PUT'])]
+    #[Route('/{id}', name: 'app_customers_item_put', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 204,
+        description: 'No return',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Customers')]
     public function put(
         Customer $currentCustomer,
         Request $request,
@@ -195,8 +236,18 @@ class CustomerController extends AbstractController
     /**
      * Delete One Customer by Id.
      */
-    #[Route('/api/customers/{id}', name: 'app_customers_item_delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'app_customers_item_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 204,
+        description: 'No Return',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Customers')]
     public function delete(
         Customer $customer,
         EntityManagerInterface $em

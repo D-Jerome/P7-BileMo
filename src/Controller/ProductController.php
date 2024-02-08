@@ -9,6 +9,8 @@ use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,6 +29,35 @@ class ProductController extends AbstractController
      * Get all Products.
      */
     #[Route(name: 'app_products_collection_get', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Return list of all customers',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+        )
+    )
+    ]
+    #[OA\Parameter(
+        name: 'page',
+        in: 'query',
+        description: 'Page to reach',
+        schema: new OA\Schema(type: 'int')
+    )]
+    #[OA\Parameter(
+        name: 'limit',
+        in: 'query',
+        description: 'Number of items by page',
+        schema: new OA\Schema(type: 'int')
+    )]
+    #[OA\Parameter(
+        name: 'brand',
+        in: 'query',
+        description: 'Filter by Brand',
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Tag(name: 'Products')]
     public function collection(
         Request $request,
         ProductRepository $productRepository,
@@ -64,6 +95,16 @@ class ProductController extends AbstractController
      * Get One Product by Id.
      */
     #[Route('/{id}', name: 'app_products_item_get', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Return product details',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Products')]
     public function item(Product $product, SerializerInterface $serializer): JsonResponse
     {
         $context = SerializationContext::create()->setGroups(['get']);
@@ -81,6 +122,16 @@ class ProductController extends AbstractController
      */
     #[Route(name: 'app_products_collection_post', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 201,
+        description: 'Return product created',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Products')]
     public function post(
         Request $request,
         SerializerInterface $serializer,
@@ -127,6 +178,16 @@ class ProductController extends AbstractController
      */
     #[Route('/{id}', name: 'app_products_item_put', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 204,
+        description: 'No Return',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Products')]
     public function put(
         Product $currentProduct,
         Request $request,
@@ -167,6 +228,16 @@ class ProductController extends AbstractController
      */
     #[Route('/{id}', name: 'app_products_item_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
+    #[OA\Response(
+        response: 204,
+        description: 'No Return',
+
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+        )
+    )]
+    #[OA\Tag(name: 'Products')]
     public function delete(Product $product, EntityManagerInterface $em): JsonResponse
     {
         $em->remove($product);

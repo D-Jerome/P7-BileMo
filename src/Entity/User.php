@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @Hateoas\Relation(
- *      "get",
+ *      "UsersList",
  *      href = @Hateoas\Route(
  *          "app_users_item_get",
  *          parameters = { "id" = "expr(object.getId())" }

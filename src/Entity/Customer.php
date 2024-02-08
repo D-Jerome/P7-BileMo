@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @Hateoas\Relation(
- *      "Userslist",
+ *      "Customerslist",
  *      href = @Hateoas\Route(
  *          "app_users_collection_get",
  *          parameters = {  }
@@ -33,7 +33,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @Hateoas\Relation(
  *      "update",
  *      href = @Hateoas\Route(
- *          "app_customers_item_update",
+ *          "app_customers_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
  *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),

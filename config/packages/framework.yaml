@@ -2,7 +2,10 @@
 framework:
     secret: '%env(APP_SECRET)%'
     #csrf_protection: true
-    annotations: false
+
+# In symfony 6.4 and up, if you get non-existent service "annotation_reader". errors,
+# you may need to remove annotations: false from config/packages/framework.yaml.
+    # annotations: false
     http_method_override: false
     handle_all_throwables: true
 

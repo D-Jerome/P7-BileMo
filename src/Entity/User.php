@@ -41,7 +41,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[UniqueEntity(
-    fields: ['username'],
+    fields: 'username',
     message: 'cet utilisateur existe déjà, merci de changer de username',
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -88,7 +88,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * [Description for $roles].
      *
-     * @var array<string>
+     * @var array<int,string>
      */
     #[ORM\Column(length: 255)]
     private array $roles = ['ROLE_USER'];
@@ -198,7 +198,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * and populated in any number of different ways when the user object
      * is created.
      *
-     * @return string[]
+     * @return array<int,string>
      */
     public function getRoles(): array
     {

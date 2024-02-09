@@ -68,9 +68,9 @@ class ProductController extends AbstractController
         /** @var int $limit */
         $limit = $request->get('limit', 4);
         /** @var string $brand */
-        $brand = $request->get('brand');
+        $brand = $request->get('brand', '');
 
-        if (!$brand) {
+        if ('' === $brand) {
             $repo = $productRepository->findAllWithPagination($page, $limit);
         } else {
             $repo = $productRepository->findByWithPagination($brand, $page, $limit);

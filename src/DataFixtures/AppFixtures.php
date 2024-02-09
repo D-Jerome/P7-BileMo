@@ -30,6 +30,10 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create('fr_FR');
+        /**
+         * @var array<int,Customer> $customerList
+         */
+        $customerList = [];
 
         for ($j = 0; $j <= 5; ++$j) {
             $customer = new Customer();

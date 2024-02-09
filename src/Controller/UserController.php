@@ -70,6 +70,7 @@ class UserController extends AbstractController
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             $repo = $userRepository->findAllWithPagination($page, $limit);
         } else {
+            Assert::notNull($connectedUser->getCustomer());
             $repo = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $page, $limit);
         }
         $context = SerializationContext::create()->setGroups(['get']);
@@ -253,7 +254,7 @@ class UserController extends AbstractController
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
-        if ($newUser->getPassword()) {
+        if (null !== $newUser->getPassword()) {
             $currentUser->setPassword(
                 $userPasswordHasher->hashPassword(
                     $currentUser,

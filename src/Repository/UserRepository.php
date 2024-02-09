@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Customer;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository <Customer>
+ * @extends ServiceEntityRepository <User>
  *
  * @method Customer|null find($id, $lockMode = null, $lockVersion = null)
  * @method Customer|null findOneBy(array $criteria, array $orderBy = null)
@@ -23,7 +24,12 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    public function findAllWithPagination(int $page, int $limit)
+    /**
+     * [Description for findAllWithPagination].
+     *
+     * @return array<int,User>
+     */
+    public function findAllWithPagination(int $page, int $limit): array
     {
         $qb = $this->createQueryBuilder('u')
             ->setFirstResult(($page - 1) * $limit)
@@ -33,7 +39,14 @@ class UserRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findByWithPagination($customer, int $page, int $limit)
+    /**
+     * [Description for findByWithPagination].
+     *
+     * @param array<string,Customer> $customer
+     *
+     * @return array<int,User>
+     */
+    public function findByWithPagination(array $customer, int $page, int $limit): array
     {
         return $this->createQueryBuilder('u')
             ->andWhere('u.customer = :customer')

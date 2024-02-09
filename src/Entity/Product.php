@@ -82,7 +82,7 @@ class Product
     /**
      * [Description for $reference].
      */
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', unique: true)]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 255)]
     private ?string $reference = null;

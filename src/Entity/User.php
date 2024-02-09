@@ -15,12 +15,20 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @Hateoas\Relation(
- *      "UsersList",
+ *      "UserDetail",
  *      href = @Hateoas\Route(
  *          "app_users_item_get",
  *          parameters = { "id" = "expr(object.getId())" }
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get")
+ *      exclusion = @Hateoas\Exclusion(groups="userList")
+ * )
+ * @Hateoas\Relation(
+ *      "UsersList",
+ *      href = @Hateoas\Route(
+ *          "app_users_collection_get",
+ *          parameters = { }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="userDetail")
  * )
  * @Hateoas\Relation(
  *      "delete",
@@ -28,7 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_users_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="userDetail", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
  * )
  * @Hateoas\Relation(
  *      "update",
@@ -36,7 +44,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_users_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="userDetail", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
  * )
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -49,6 +57,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * [Description for $id].
      */
+    #[Groups(['userDetail', 'userList'])]
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue()]
@@ -57,6 +66,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * [Description for $username].
      */
+    #[Groups(['userDetail', 'userList'])]
     #[ORM\Column(type: 'string', length: 255, unique: true)]
     #[Assert\NotBlank()]
     #[Assert\Length(min: 5, minMessage: 'Username {{ value }} est trop court, minimum {{ limit }} caractères requis')]
@@ -65,7 +75,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * [Description for $email].
      */
-    #[Groups(['get'])]
+    #[Groups(['userDetail'])]
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\Email()]
     private ?string $email = null;
@@ -81,8 +91,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * [Description for $createdAt].
      */
+    #[Groups(['userDetail'])]
     #[ORM\Column(type: 'datetime_immutable')]
-    #[Groups(['get'])]
     private ?\DateTimeInterface $createdAt = null;
 
     /**
@@ -90,15 +100,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @var array<int,string>
      */
+    #[Groups(['userDetail'])]
     #[ORM\Column(length: 255)]
     private array $roles = ['ROLE_USER'];
 
     /**
      * [Description for $customer].
      */
+    #[Groups(['userDetail', 'userList'])]
     #[ORM\ManyToOne(inversedBy: 'users')]
     #[ORM\JoinColumn()]
-    #[Groups(['get'])]
     private ?Customer $customer = null;
 
     /**

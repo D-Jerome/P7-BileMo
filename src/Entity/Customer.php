@@ -17,18 +17,26 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @Hateoas\Relation(
  *      "Customerslist",
  *      href = @Hateoas\Route(
- *          "app_users_collection_get",
+ *          "app_customers_collection_get",
  *          parameters = {  }
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerDetail", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
  * )
- * * @Hateoas\Relation(
+ * @Hateoas\Relation(
+ *      "CustomerDetail",
+ *      href = @Hateoas\Route(
+ *          "app_customers_item_get",
+ *          parameters = { "id" = "expr(object.getId())" },
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="customerList", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ * )
+ * @Hateoas\Relation(
  *      "delete",
  *      href = @Hateoas\Route(
  *          "app_customers_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
  * )
  * @Hateoas\Relation(
  *      "update",
@@ -36,7 +44,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_customers_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
  * )
  */
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
@@ -52,14 +60,14 @@ class Customer
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue()]
-    #[Groups(['get'])]
+    #[Groups(['customerDetail', 'customerList'])]
     private ?int $id = null;
 
     /**
      * [Description for $name].
      */
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(['get'])]
+    #[Groups(['customerDetail', 'customerList'])]
     #[Assert\NotNull()]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 255)]
@@ -76,7 +84,8 @@ class Customer
      *
      * @var Collection<int,User>
      */
-    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: User::class)]
+    #[Groups(['customerDetail'])]
+    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: User::class, cascade: ['remove'])]
     #[ORM\JoinColumn()]
     private Collection $users;
 

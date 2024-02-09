@@ -36,10 +36,9 @@ class CustomerController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerList']))
         )
-    )
-    ]
+    )]
     #[OA\Parameter(
         name: 'page',
         in: 'query',
@@ -72,7 +71,7 @@ class CustomerController extends AbstractController
         } else {
             $repo = $customerRepository->findBy(['id' => $connectedUser->getCustomer()]);
         }
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['customerList']);
 
         return new JsonResponse(
             $serializer->serialize($repo, 'json', $context),
@@ -93,7 +92,7 @@ class CustomerController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
     )]
     #[OA\Tag(name: 'Customers')]
@@ -105,7 +104,7 @@ class CustomerController extends AbstractController
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['customerDetail', 'userList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             return new JsonResponse(
                 $serializer->serialize($customer, 'json', $context),
@@ -141,7 +140,7 @@ class CustomerController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
     )]
     #[OA\Tag(name: 'Customers')]
@@ -154,7 +153,7 @@ class CustomerController extends AbstractController
     ): JsonResponse {
         /** @var Customer $customer */
         $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['customerDetail']);
         $errors = $validator->validate($customer);
         if ($errors->count() > 0) {
             return new JsonResponse(
@@ -197,7 +196,7 @@ class CustomerController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
     )]
     #[OA\Tag(name: 'Customers')]
@@ -244,7 +243,7 @@ class CustomerController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
     )]
     #[OA\Tag(name: 'Customers')]

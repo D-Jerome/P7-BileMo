@@ -36,7 +36,7 @@ class UserController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['userList']))
         )
     )
     ]
@@ -73,7 +73,7 @@ class UserController extends AbstractController
             Assert::notNull($connectedUser->getCustomer());
             $repo = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $page, $limit);
         }
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
 
         return new JsonResponse(
             $serializer->serialize(
@@ -97,7 +97,7 @@ class UserController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
     )]
     #[OA\Tag(name: 'Users')]
@@ -109,7 +109,7 @@ class UserController extends AbstractController
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['userDetail', 'customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             return new JsonResponse(
                 $serializer->serialize($user, 'json', $context),
@@ -143,7 +143,7 @@ class UserController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
     )]
     #[OA\Tag(name: 'Users')]
@@ -159,7 +159,7 @@ class UserController extends AbstractController
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['userDetail']);
         /** @var User $user */
         $user = $serializer->deserialize($request->getContent(), User::class, 'json');
 
@@ -212,7 +212,7 @@ class UserController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
     )]
     #[OA\Tag(name: 'Users')]
@@ -280,7 +280,7 @@ class UserController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
     )]
     #[OA\Tag(name: 'Users')]

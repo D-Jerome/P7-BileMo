@@ -35,10 +35,9 @@ class ProductController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['productList']))
         )
-    )
-    ]
+    )]
     #[OA\Parameter(
         name: 'page',
         in: 'query',
@@ -81,7 +80,7 @@ class ProductController extends AbstractController
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['productList']);
 
         return new JsonResponse(
             $serializer->serialize($repo, 'json', $context),
@@ -101,13 +100,13 @@ class ProductController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['ProductDetail']))
         )
     )]
     #[OA\Tag(name: 'Products')]
     public function item(Product $product, SerializerInterface $serializer): JsonResponse
     {
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['productDetail']);
 
         return new JsonResponse(
             $serializer->serialize($product, 'json', $context),
@@ -128,7 +127,7 @@ class ProductController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['productDetail']))
         )
     )]
     #[OA\Tag(name: 'Products')]
@@ -141,7 +140,7 @@ class ProductController extends AbstractController
     ): JsonResponse {
         /** @var Product $product */
         $product = $serializer->deserialize($request->getContent(), Product::class, 'json');
-        $context = SerializationContext::create()->setGroups(['get']);
+        $context = SerializationContext::create()->setGroups(['productDetail']);
         $errors = $validator->validate($product);
         if ($errors->count() > 0) {
             return new JsonResponse(
@@ -165,7 +164,7 @@ class ProductController extends AbstractController
             $serializer->serialize($product, 'json', $context),
             JsonResponse::HTTP_CREATED,
             ['Location' => $urlGenerator->generate(
-                'app_Products_item_get',
+                'app_products_item_get',
                 ['id' => $product->getId()]
             ),
             ],
@@ -184,7 +183,7 @@ class ProductController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['productDetail']))
         )
     )]
     #[OA\Tag(name: 'Products')]
@@ -234,7 +233,7 @@ class ProductController extends AbstractController
 
         content: new OA\JsonContent(
             type: 'array',
-            items: new OA\Items(ref: new Model(type: Product::class, groups: ['get']))
+            items: new OA\Items(ref: new Model(type: Product::class, groups: ['productDetail']))
         )
     )]
     #[OA\Tag(name: 'Products')]

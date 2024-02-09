@@ -14,20 +14,28 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @Hateoas\Relation(
- *      "Productslist",
+ *      name= "ProductsDetail",
+ *      href = @Hateoas\Route(
+ *          "app_products_item_get",
+ *          parameters = { "id" = "expr(object.getId())" },
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="productList"),
+ * )
+ * @Hateoas\Relation(
+ *      "ProductsList",
  *      href = @Hateoas\Route(
  *          "app_products_collection_get",
  *          parameters = {  }
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="productDetail"),
  * )
- * * @Hateoas\Relation(
+ * @Hateoas\Relation(
  *      "delete",
  *      href = @Hateoas\Route(
  *          "app_products_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="productDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
  * )
  * @Hateoas\Relation(
  *      "update",
@@ -35,7 +43,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_products_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="get", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="productDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
  * )
  */
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
@@ -51,14 +59,14 @@ class Product
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue]
-    #[Groups(['get'])]
+    #[Groups(['productList', 'productDetail'])]
     private ?int $id = null;
 
     /**
      * [Description for $brand].
      */
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(['get'])]
+    #[Groups(['productList', 'productDetail'])]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 255)]
     private ?string $brand = null;
@@ -67,7 +75,7 @@ class Product
      * [Description for $name].
      */
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(['get'])]
+    #[Groups(['productList', 'productDetail'])]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 255)]
     private ?string $name = null;
@@ -75,6 +83,7 @@ class Product
     /**
      * [Description for $description].
      */
+    #[Groups(['productDetail'])]
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank()]
     private ?string $description = null;
@@ -82,6 +91,7 @@ class Product
     /**
      * [Description for $reference].
      */
+    #[Groups(['productDetail'])]
     #[ORM\Column(type: 'string', unique: true)]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 255)]
@@ -90,6 +100,7 @@ class Product
     /**
      * [Description for $createdAt].
      */
+    #[Groups(['productDetail'])]
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeInterface $createdAt;
 

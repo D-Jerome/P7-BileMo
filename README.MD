@@ -80,7 +80,7 @@ Lancer le serveur symfony
 ## Rôles
 
 Les endpoints suivants nécessitent un rôle administrateur :
-
+```
 <span style="color:#78bc61">POST</span>
 `/api/customers`
 
@@ -89,17 +89,18 @@ Les endpoints suivants nécessitent un rôle administrateur :
 
 <span style="color:#ed6a5a">DELETE</span>
 `/api/customers/{id}`
-
+```
 Les endpoints suivants nécessitent un rôle administrateur de la compagnie(customer) :
-
+```
 <span style="color:#78bc61">POST</span>
 `/api/users`
 
 <span style="color:#e6c229">PUT</span>
 `/api/users/{id}`
 
-<span style="color:red">DELETE</span>
+<span style="color:#3caab5">DELETE</span>
 `/api/users/{id}`
+```
 
 Les [données initiales](https://github.com/D-Jerome/P7-BileMo/#installation) en detail:
 Le mot de passe **password** pour tous les utilisateurs.

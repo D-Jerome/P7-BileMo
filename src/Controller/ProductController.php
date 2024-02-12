@@ -6,6 +6,8 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
+use App\Request\DTO\FilterDTO;
+use App\Request\DTO\PaginationDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -14,6 +16,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -58,21 +61,15 @@ class ProductController extends AbstractController
     )]
     #[OA\Tag(name: 'Products')]
     public function collection(
-        Request $request,
+        #[MapRequestPayload] PaginationDTO $paginationDTO,
+        #[MapRequestPayload] FilterDTO $filterDTO,
         ProductRepository $productRepository,
         SerializerInterface $serializer
     ): JsonResponse {
-        /** @var int $page */
-        $page = $request->get('page', 1);
-        /** @var int $limit */
-        $limit = $request->get('limit', 4);
-        /** @var string $brand */
-        $brand = $request->get('brand', '');
-
-        if ('' === $brand) {
-            $repo = $productRepository->findAllWithPagination($page, $limit);
+        if (!$filterDTO->brand) {
+            $repo = $productRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
         } else {
-            $repo = $productRepository->findByWithPagination($brand, $page, $limit);
+            $repo = $productRepository->findByWithPagination($filterDTO->brand, $paginationDTO->page, $paginationDTO->limit);
         }
         if ([] === $repo) {
             return new JsonResponse(

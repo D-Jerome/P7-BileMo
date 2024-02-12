@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Customer;
 use App\Entity\User;
 use App\Repository\CustomerRepository;
+use App\Request\DTO\PaginationDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -15,6 +16,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -54,7 +56,7 @@ class CustomerController extends AbstractController
     #[OA\Tag(name: 'Customers')]
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
     public function collection(
-        Request $request,
+        #[MapRequestPayload()] PaginationDTO $paginationDTO,
         CustomerRepository $customerRepository,
         SerializerInterface $serializer
     ): JsonResponse {
@@ -62,12 +64,9 @@ class CustomerController extends AbstractController
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
-        /** @var int $page */
-        $page = $request->get('page', 1);
-        /** @var int $limit */
-        $limit = $request->get('limit', 4);
+
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
-            $repo = $customerRepository->findAllWithPagination($page, $limit);
+            $repo = $customerRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
         } else {
             $repo = $customerRepository->findBy(['id' => $connectedUser->getCustomer()]);
         }

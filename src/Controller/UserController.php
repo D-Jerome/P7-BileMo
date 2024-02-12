@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Request\DTO\PaginationDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -14,6 +15,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -54,7 +56,7 @@ class UserController extends AbstractController
     )]
     #[OA\Tag(name: 'Users')]
     public function collection(
-        Request $request,
+        #[MapRequestPayload()] PaginationDTO $paginationDTO,
         UserRepository $userRepository,
         SerializerInterface $serializer
     ): JsonResponse {
@@ -62,16 +64,12 @@ class UserController extends AbstractController
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
-        /** @var int $page */
-        $page = $request->get('page', 1);
-        /** @var int $limit */
-        $limit = $request->get('limit', 4);
 
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
-            $repo = $userRepository->findAllWithPagination($page, $limit);
+            $repo = $userRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
         } else {
             Assert::notNull($connectedUser->getCustomer());
-            $repo = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $page, $limit);
+            $repo = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $paginationDTO->page, $paginationDTO->limit);
         }
         $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
 

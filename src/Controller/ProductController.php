@@ -21,6 +21,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 /**
  * class ProductController.
@@ -61,26 +63,43 @@ class ProductController extends AbstractController
     )]
     #[OA\Tag(name: 'Products')]
     public function collection(
-        #[MapRequestPayload] PaginationDTO $paginationDTO,
-        #[MapRequestPayload] FilterDTO $filterDTO,
+        #[MapRequestPayload()] PaginationDTO $paginationDTO,
+        #[MapRequestPayload()] FilterDTO $filterDTO,
         ProductRepository $productRepository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
-        if (!$filterDTO->brand) {
-            $repo = $productRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
+        $context = SerializationContext::create()->setGroups(['productList']);
+        if (null === $filterDTO->brand) {
+            $idCache = 'getAllProducts-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
+
+            $jsonProductList = $cache->get($idCache, function (ItemInterface $item) use ($productRepository, $paginationDTO, $serializer, $context) {
+                $item->tag('productCache');
+                $item->expiresAfter(15);
+                $productList = $productRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
+
+                return $serializer->serialize($productList, 'json', $context);
+            });
         } else {
-            $repo = $productRepository->findByWithPagination($filterDTO->brand, $paginationDTO->page, $paginationDTO->limit);
+            $idCache = 'getBrandProducts-'.$filterDTO->brand.'-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
+
+            $jsonProductList = $cache->get($idCache, function (ItemInterface $item) use ($productRepository, $paginationDTO, $filterDTO, $serializer, $context) {
+                $item->tag('productCache');
+                $item->expiresAfter(15);
+                $productList = $productRepository->findByWithPagination($filterDTO->brand, $paginationDTO->page, $paginationDTO->limit);
+
+                return $serializer->serialize($productList, 'json', $context);
+            });
         }
-        if ([] === $repo) {
+        if (2 == strlen($jsonProductList)) {
             return new JsonResponse(
-                $repo,
+                [],
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
-        $context = SerializationContext::create()->setGroups(['productList']);
 
         return new JsonResponse(
-            $serializer->serialize($repo, 'json', $context),
+            $jsonProductList,
             JsonResponse::HTTP_OK,
             [],
             true
@@ -101,12 +120,22 @@ class ProductController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'Products')]
-    public function item(Product $product, SerializerInterface $serializer): JsonResponse
-    {
+    public function item(Product $product,
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache
+    ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['productDetail']);
+        $idCache = 'getProduct-'.$product->getId();
+
+        $jsonProduct = $cache->get($idCache, function (ItemInterface $item) use ($product, $serializer, $context) {
+            $item->tag('productCache');
+            $item->expiresAfter(15);
+
+            return $serializer->serialize($product, 'json', $context);
+        });
 
         return new JsonResponse(
-            $serializer->serialize($product, 'json', $context),
+            $jsonProduct,
             JsonResponse::HTTP_OK,
             [],
             true
@@ -133,7 +162,8 @@ class ProductController extends AbstractController
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         UrlGeneratorInterface $urlGenerator,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /** @var Product $product */
         $product = $serializer->deserialize($request->getContent(), Product::class, 'json');
@@ -156,6 +186,7 @@ class ProductController extends AbstractController
             );
         }
         $em->flush();
+        $cache->invalidateTags(['productCache']);
 
         return new JsonResponse(
             $serializer->serialize($product, 'json', $context),
@@ -189,7 +220,8 @@ class ProductController extends AbstractController
         Request $request,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /** @var Product $newProduct */
         $newProduct = $serializer->deserialize(
@@ -212,6 +244,7 @@ class ProductController extends AbstractController
         }
 
         $em->flush();
+        $cache->invalidateTags(['productCache']);
 
         return new JsonResponse(
             null,
@@ -234,10 +267,14 @@ class ProductController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'Products')]
-    public function delete(Product $product, EntityManagerInterface $em): JsonResponse
-    {
+    public function delete(
+        Product $product,
+        EntityManagerInterface $em,
+        TagAwareCacheInterface $cache
+    ): JsonResponse {
         $em->remove($product);
         $em->flush();
+        $cache->invalidateTags(['productCache']);
 
         return new JsonResponse(
             null,

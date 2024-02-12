@@ -20,6 +20,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Webmozart\Assert\Assert;
 
 /**
@@ -58,31 +60,40 @@ class UserController extends AbstractController
     public function collection(
         #[MapRequestPayload()] PaginationDTO $paginationDTO,
         UserRepository $userRepository,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /**
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
 
+        $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
-            $repo = $userRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
+            $idCache = 'getAllUsers-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
+
+            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($userRepository, $paginationDTO, $serializer, $context) {
+                $item->tag('allUsersCache');
+                $item->expiresAfter(15);
+                $userList = $userRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
+
+                return $serializer->serialize($userList, 'json', $context);
+            });
         } else {
             Assert::notNull($connectedUser->getCustomer());
-            $repo = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $paginationDTO->page, $paginationDTO->limit);
-        }
-        $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
 
-        return new JsonResponse(
-            $serializer->serialize(
-                $repo,
-                'json',
-                $context
-            ),
-            JsonResponse::HTTP_OK,
-            [],
-            true
-        );
+            $idCache = 'getAllUsersByCustomer-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
+
+            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($userRepository, $paginationDTO, $serializer, $context, $connectedUser) {
+                $item->tag('allUsersByCustomerCache');
+                $item->expiresAfter(15);
+                $userList = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $paginationDTO->page, $paginationDTO->limit);
+
+                return $serializer->serialize($userList, 'json', $context);
+            });
+        }
+
+        return new JsonResponse($jsonUserList, JsonResponse::HTTP_OK, [], true);
     }
 
     /**
@@ -101,16 +112,25 @@ class UserController extends AbstractController
     #[OA\Tag(name: 'Users')]
     public function item(
         User $user,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /**
          * @var User $connectedUser
          */
         $connectedUser = $this->getUser();
         $context = SerializationContext::create()->setGroups(['userDetail', 'customerList']);
+        $idCache = 'getUser-'.$user->getId();
+
+        $jsonUser = $cache->get($idCache, function (ItemInterface $item) use ($user, $serializer, $context) {
+            $item->tag('UserCache');
+            $item->expiresAfter(15);
+
+            return $serializer->serialize($user, 'json', $context);
+        });
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             return new JsonResponse(
-                $serializer->serialize($user, 'json', $context),
+                $jsonUser,
                 JsonResponse::HTTP_OK,
                 [],
                 true
@@ -124,7 +144,7 @@ class UserController extends AbstractController
         }
 
         return new JsonResponse(
-            $serializer->serialize($user, 'json', $context),
+            $jsonUser,
             JsonResponse::HTTP_OK,
             [],
             true
@@ -151,7 +171,8 @@ class UserController extends AbstractController
         EntityManagerInterface $em,
         UrlGeneratorInterface $urlGenerator,
         ValidatorInterface $validator,
-        UserPasswordHasherInterface $userPasswordHasher
+        UserPasswordHasherInterface $userPasswordHasher,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /**
          * @var User $connectedUser
@@ -187,6 +208,7 @@ class UserController extends AbstractController
         }
 
         $em->flush();
+        $cache->invalidateTags(['UserCache']);
 
         return new JsonResponse(
             $serializer->serialize(
@@ -220,7 +242,8 @@ class UserController extends AbstractController
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         ValidatorInterface $validator,
-        UserPasswordHasherInterface $userPasswordHasher
+        UserPasswordHasherInterface $userPasswordHasher,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /**
          * @var User $connectedUser
@@ -261,6 +284,7 @@ class UserController extends AbstractController
             );
         }
         $em->flush();
+        $cache->invalidateTags(['UserCache']);
 
         return new JsonResponse(
             null,
@@ -284,7 +308,8 @@ class UserController extends AbstractController
     #[OA\Tag(name: 'Users')]
     public function delete(
         User $user,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        TagAwareCacheInterface $cache
     ): JsonResponse {
         /**
          * @var User $connectedUser
@@ -300,6 +325,7 @@ class UserController extends AbstractController
 
         $em->remove($user);
         $em->flush();
+        $cache->invalidateTags(['UserCache']);
 
         return new JsonResponse(
             null,

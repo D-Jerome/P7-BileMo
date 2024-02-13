@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Entity\Customer;
-use Webmozart\Assert\Assert;
-use OpenApi\Attributes as OA;
-use App\Request\DTO\PaginationDTO;
+use App\Entity\User;
 use App\Repository\CustomerRepository;
-use JMS\Serializer\SerializerInterface;
+use App\Request\DTO\PaginationDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
-use Symfony\Contracts\Cache\ItemInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Contracts\Cache\TagAwareCacheInterface;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * class CustomerController.
@@ -90,7 +90,6 @@ class CustomerController extends AbstractController
 
                 return $serializer->serialize($customerList, 'json', $context);
             });
-            
         }
 
         return new JsonResponse(
@@ -151,22 +150,20 @@ class CustomerController extends AbstractController
             );
         }
 
+        $idCache = 'getCustomer-'.$customer->getId();
+
+        $jsonCustomerList = $cache->get($idCache, function (ItemInterface $item) use ($customer, $serializer, $context) {
+            $item->tag('customerCache');
+            $item->expiresAfter(15);
+
+            return $serializer->serialize($customer, 'json', $context);
+        });
+
         return new JsonResponse(
-            $idCache = 'getCustomer-'.$customer->getId();
-
-            $jsonCustomerList = $cache->get($idCache, function (ItemInterface $item) use ($customer, $serializer, $context) {
-                $item->tag('customerCache');
-                $item->expiresAfter(15);
-
-                return $serializer->serialize($customer, 'json', $context);
-            });
-
-            return new JsonResponse(
-                $jsonCustomerList,
-                JsonResponse::HTTP_OK,
-                [],
-                true
-            );
+            $jsonCustomerList,
+            JsonResponse::HTTP_OK,
+            [],
+            true
         );
     }
 

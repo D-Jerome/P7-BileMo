@@ -17,6 +17,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -36,13 +37,21 @@ class ProductController extends AbstractController
      */
     #[Route(name: 'app_products_collection_get', methods: ['GET'])]
     #[OA\Response(
-        response: 200,
-        description: 'Return list of all customers',
+        response: Response::HTTP_OK,
+        description: 'Return list of products',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Product::class, groups: ['productList']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Parameter(
         name: 'page',
@@ -113,13 +122,21 @@ class ProductController extends AbstractController
      */
     #[Route('/{id}', name: 'app_products_item_get', methods: ['GET'])]
     #[OA\Response(
-        response: 200,
+        response: Response::HTTP_OK,
         description: 'Return product details',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Product::class, groups: ['ProductDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_NOT_FOUND,
+        description: 'no ressource found.'
     )]
     #[OA\Tag(name: 'Products')]
     public function item(
@@ -151,13 +168,21 @@ class ProductController extends AbstractController
     #[Route(name: 'app_products_collection_post', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 201,
+        response: Response::HTTP_CREATED,
         description: 'Return product created',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Product::class, groups: ['productDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Tag(name: 'Products')]
     public function post(
@@ -205,13 +230,21 @@ class ProductController extends AbstractController
     #[Route('/{id}', name: 'app_products_item_put', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 204,
+        response: Response::HTTP_NO_CONTENT,
         description: 'No Return',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Product::class, groups: ['productDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Tag(name: 'Products')]
     public function put(
@@ -259,13 +292,18 @@ class ProductController extends AbstractController
     #[Route('/{id}', name: 'app_products_item_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 204,
+        response: Response::HTTP_NO_CONTENT,
         description: 'No Return',
 
-        content: new OA\JsonContent(
-            type: 'array',
-            items: new OA\Items(ref: new Model(type: Product::class, groups: ['productDetail']))
-        )
+        content: null
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_NOT_FOUND,
+        description: 'no ressource found.'
     )]
     #[OA\Tag(name: 'Products')]
     public function delete(

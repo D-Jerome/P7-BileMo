@@ -17,6 +17,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -38,13 +39,21 @@ class CustomerController extends AbstractController
      */
     #[Route(name: 'app_customers_collection_get', methods: ['GET'])]
     #[OA\Response(
-        response: 200,
+        response: Response::HTTP_OK,
         description: 'Return list of customers',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerList']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Parameter(
         name: 'page',
@@ -105,13 +114,21 @@ class CustomerController extends AbstractController
     #[Route('/{id}', name: 'app_customers_item_get', methods: ['GET'])]
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 200,
+        response: Response::HTTP_OK,
         description: 'Customer details',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_NOT_FOUND,
+        description: 'no ressource found.'
     )]
     #[OA\Tag(name: 'Customers')]
     public function item(
@@ -169,13 +186,21 @@ class CustomerController extends AbstractController
     #[Route(name: 'app_customers_collection_post', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 201,
+        response: Response::HTTP_CREATED,
         description: 'Return customer created',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Tag(name: 'Customers')]
     public function post(
@@ -227,13 +252,21 @@ class CustomerController extends AbstractController
     #[Route('/{id}', name: 'app_customers_item_put', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 204,
+        response: Response::HTTP_NO_CONTENT,
         description: 'No return',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Tag(name: 'Customers')]
     public function put(
@@ -269,13 +302,18 @@ class CustomerController extends AbstractController
     #[Route('/{id}', name: 'app_customers_item_delete', methods: ['DELETE'])]
     #[IsGranted('ROLE_ADMIN', message: 'You are not allowed to access')]
     #[OA\Response(
-        response: 204,
+        response: Response::HTTP_NO_CONTENT,
         description: 'No Return',
 
-        content: new OA\JsonContent(
-            type: 'array',
-            items: new OA\Items(ref: new Model(type: Customer::class, groups: ['customerDetail']))
-        )
+        content: null
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_NOT_FOUND,
+        description: 'no ressource found.'
     )]
     #[OA\Tag(name: 'Customers')]
     public function delete(

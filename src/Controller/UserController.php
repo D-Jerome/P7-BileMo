@@ -16,6 +16,7 @@ use OpenApi\Attributes as OA;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -37,15 +38,22 @@ class UserController extends AbstractController
      */
     #[Route(name: 'app_users_collection_get', methods: ['GET'])]
     #[OA\Response(
-        response: 200,
+        response: Response::HTTP_OK,
         description: 'Return list of users',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: User::class, groups: ['userList']))
         )
-    )
-    ]
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
+    )]
     #[OA\Parameter(
         name: 'page',
         in: 'query',
@@ -99,13 +107,21 @@ class UserController extends AbstractController
      */
     #[Route('/{id}', name: 'app_users_item_get', methods: ['GET'])]
     #[OA\Response(
-        response: 200,
+        response: Response::HTTP_OK,
         description: 'Return User details',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_NOT_FOUND,
+        description: 'no ressource found.'
     )]
     #[OA\Tag(name: 'Users')]
     public function item(
@@ -151,13 +167,21 @@ class UserController extends AbstractController
      */
     #[Route(name: 'app_users_collection_post', methods: ['POST'])]
     #[OA\Response(
-        response: 201,
+        response: Response::HTTP_CREATED,
         description: 'Return user created',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Tag(name: 'Users')]
     public function post(
@@ -225,13 +249,21 @@ class UserController extends AbstractController
      */
     #[Route('/{id}', name: 'app_users_item_put', methods: ['PUT'])]
     #[OA\Response(
-        response: 204,
+        response: Response::HTTP_NO_CONTENT,
         description: 'No Return',
 
         content: new OA\JsonContent(
             type: 'array',
             items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
         )
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_BAD_REQUEST,
+        description: 'Error in query'
     )]
     #[OA\Tag(name: 'Users')]
     public function put(
@@ -294,13 +326,18 @@ class UserController extends AbstractController
      */
     #[Route('/{id}', name: 'app_users_item_delete', methods: ['DELETE'])]
     #[OA\Response(
-        response: 204,
+        response: Response::HTTP_NO_CONTENT,
         description: 'No Return',
 
-        content: new OA\JsonContent(
-            type: 'array',
-            items: new OA\Items(ref: new Model(type: User::class, groups: ['userDetail']))
-        )
+        content: null
+    )]
+    #[OA\Response(
+        response: Response::HTTP_UNAUTHORIZED,
+        description: 'JWT Token not found'
+    )]
+    #[OA\Response(
+        response: Response::HTTP_NOT_FOUND,
+        description: 'no ressource found.'
     )]
     #[OA\Tag(name: 'Users')]
     public function delete(

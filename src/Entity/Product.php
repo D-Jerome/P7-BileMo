@@ -35,7 +35,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_products_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="productDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="productDetail"),
  * )
  * @Hateoas\Relation(
  *      "update",
@@ -43,7 +43,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_products_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="productDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="productDetail"),
  * )
  */
 #[ORM\Entity(repositoryClass: ProductRepository::class)]

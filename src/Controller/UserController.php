@@ -7,18 +7,20 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Request\DTO\PaginationDTO;
+use App\Request\DTO\UserDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
@@ -59,15 +61,11 @@ class UserController extends AbstractController
     #[OA\Tag(name: 'Users')]
     public function collection(
         #[MapRequestPayload()] PaginationDTO $paginationDTO,
+        #[CurrentUser] User $connectedUser,
         UserRepository $userRepository,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
-
         $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             $idCache = 'getAllUsers-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
@@ -111,14 +109,11 @@ class UserController extends AbstractController
     )]
     #[OA\Tag(name: 'Users')]
     public function item(
-        User $user,
+        #[CurrentUser] User $connectedUser,
+        #[MapEntity(id: 'id')] User $user,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
         $context = SerializationContext::create()->setGroups(['userDetail', 'customerList']);
         $idCache = 'getUser-'.$user->getId();
 
@@ -166,7 +161,8 @@ class UserController extends AbstractController
     )]
     #[OA\Tag(name: 'Users')]
     public function post(
-        Request $request,
+        #[MapRequestPayload()] UserDTO $userDTO,
+        #[CurrentUser] User $connectedUser,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         UrlGeneratorInterface $urlGenerator,
@@ -174,35 +170,37 @@ class UserController extends AbstractController
         UserPasswordHasherInterface $userPasswordHasher,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
         $context = SerializationContext::create()->setGroups(['userDetail']);
-        /** @var User $user */
-        $user = $serializer->deserialize($request->getContent(), User::class, 'json');
+        // /** @var User $user */
+        // $user = $serializer->deserialize($request->getContent(), User::class, 'json');
 
-        $errors = $validator->validate($user);
+        $errors = $validator->validate($userDTO);
         if ($errors->count() > 0) {
             return new JsonResponse(
-                $serializer->serialize($errors, 'json'),
+                $serializer->serialize($errors, 'json', $context),
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
-        Assert::notNull($user->getPassword());
+        $user = new User();
+        if (!$userDTO->username || !$userDTO->email || !$userDTO->password) {
+            return new JsonResponse(
+                $serializer->serialize($errors, 'json', $context),
+                JsonResponse::HTTP_BAD_REQUEST
+            );
+        }
+        $user->setUsername($userDTO->username);
+        $user->setEmail($userDTO->email);
         $user->setPassword(
-            $userPasswordHasher->hashPassword(
-                $user,
-                $user->getPassword()
-            )
+            $userPasswordHasher->hashPassword($user, $userDTO->password)
         );
         $user->setCustomer($connectedUser->getCustomer());
+
         $em->persist($user);
 
         $errors = $validator->validate($user);
         if ($errors->count() > 0) {
             return new JsonResponse(
-                $serializer->serialize($errors, 'json'),
+                $serializer->serialize($errors, 'json', $context),
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
@@ -237,37 +235,36 @@ class UserController extends AbstractController
     )]
     #[OA\Tag(name: 'Users')]
     public function put(
-        User $currentUser,
-        Request $request,
+        #[CurrentUser] User $connectedUser,
+        #[MapEntity(id: 'id')] User $currentUser,
+        #[MapRequestPayload()] UserDTO $userDTO,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         ValidatorInterface $validator,
         UserPasswordHasherInterface $userPasswordHasher,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
-
         if ($connectedUser->getCustomer() !== $currentUser->getCustomer()) {
             return new JsonResponse(
                 null,
                 JsonResponse::HTTP_UNAUTHORIZED
             );
         }
-        /** @var User $newUser */
-        $newUser = $serializer->deserialize(
-            $request->getContent(),
-            User::class,
-            'json'
-        );
-
-        $currentUser->setUsername($newUser->getUsername());
-        $currentUser->setEmail($newUser->getEmail());
-        $currentUser->setPassword($newUser->getPassword());
-        $currentUser->setRoles($newUser->getRoles());
-
+        // /** @var User $newUser */
+        // $newUser = $serializer->deserialize(
+        //     $request->getContent(),
+        //     User::class,
+        //     'json'
+        // );
+        if (null !== $userDTO->username) {
+            $currentUser->setUsername($userDTO->username);
+        }
+        if (null !== $userDTO->email) {
+            $currentUser->setEmail($userDTO->email);
+        }
+        if (null !== $userDTO->roles) {
+            $currentUser->setRoles([$userDTO->roles]);
+        }
         $errors = $validator->validate($currentUser);
         if ($errors->count() > 0) {
             return new JsonResponse(
@@ -275,11 +272,11 @@ class UserController extends AbstractController
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
-        if (null !== $newUser->getPassword()) {
+        if (null !== $userDTO->password) {
             $currentUser->setPassword(
                 $userPasswordHasher->hashPassword(
                     $currentUser,
-                    $newUser->getPassword()
+                    $userDTO->password
                 )
             );
         }
@@ -307,15 +304,11 @@ class UserController extends AbstractController
     )]
     #[OA\Tag(name: 'Users')]
     public function delete(
-        User $user,
+        #[CurrentUser] User $connectedUser,
+        #[MapEntity(id: 'id')] User $user,
         EntityManagerInterface $em,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
-
         if ($connectedUser->getCustomer() !== $user->getCustomer()) {
             return new JsonResponse(
                 null,

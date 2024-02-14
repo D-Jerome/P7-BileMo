@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_customers_collection_get",
  *          parameters = {  }
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="customerDetail", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerDetail"),
  * )
  * @Hateoas\Relation(
  *      "CustomerDetail",
@@ -28,7 +28,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_customers_item_get",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="customerList", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerList"),
  * )
  * @Hateoas\Relation(
  *      "delete",
@@ -36,7 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_customers_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="customerDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerDetail"),
  * )
  * @Hateoas\Relation(
  *      "update",
@@ -44,7 +44,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_customers_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="customerDetail", excludeIf = "expr(not is_granted('ROLE_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="customerDetail"),
  * )
  */
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]

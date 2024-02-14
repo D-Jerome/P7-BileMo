@@ -36,7 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_users_item_delete",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="userDetail", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="userDetail"),
  * )
  * @Hateoas\Relation(
  *      "update",
@@ -44,7 +44,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *          "app_users_item_put",
  *          parameters = { "id" = "expr(object.getId())" },
  *      ),
- *      exclusion = @Hateoas\Exclusion(groups="userDetail", excludeIf = "expr(not is_granted('ROLE_COMPANY_ADMIN'))"),
+ *      exclusion = @Hateoas\Exclusion(groups="userDetail"),
  * )
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]

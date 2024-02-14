@@ -8,14 +8,15 @@ use App\Entity\Product;
 use App\Repository\ProductRepository;
 use App\Request\DTO\FilterDTO;
 use App\Request\DTO\PaginationDTO;
+use App\Request\DTO\ProductDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -70,6 +71,7 @@ class ProductController extends AbstractController
         TagAwareCacheInterface $cache
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['productList']);
+
         if (null === $filterDTO->brand) {
             $idCache = 'getAllProducts-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
 
@@ -120,7 +122,8 @@ class ProductController extends AbstractController
         )
     )]
     #[OA\Tag(name: 'Products')]
-    public function item(Product $product,
+    public function item(
+        #[MapEntity(id: 'id')] Product $product,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache
     ): JsonResponse {
@@ -158,35 +161,31 @@ class ProductController extends AbstractController
     )]
     #[OA\Tag(name: 'Products')]
     public function post(
-        Request $request,
+        #[MapRequestPayload()] ProductDTO $productDTO,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         UrlGeneratorInterface $urlGenerator,
         ValidatorInterface $validator,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /** @var Product $product */
-        $product = $serializer->deserialize($request->getContent(), Product::class, 'json');
         $context = SerializationContext::create()->setGroups(['productDetail']);
-        $errors = $validator->validate($product);
-        if ($errors->count() > 0) {
-            return new JsonResponse(
-                $serializer->serialize($errors, 'json'),
-                JsonResponse::HTTP_BAD_REQUEST
-            );
-        }
 
+        $product = new Product();
+        $product->setBrand($productDTO->brand);
+        $product->setDescription($productDTO->description);
+        $product->setName($productDTO->name);
+        $product->setReference($productDTO->reference);
         $em->persist($product);
 
+        $cache->invalidateTags(['productCache']);
         $errors = $validator->validate($product);
         if ($errors->count() > 0) {
             return new JsonResponse(
-                $serializer->serialize($errors, 'json'),
+                $serializer->serialize($errors, 'json', $context),
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
         $em->flush();
-        $cache->invalidateTags(['productCache']);
 
         return new JsonResponse(
             $serializer->serialize($product, 'json', $context),
@@ -216,29 +215,31 @@ class ProductController extends AbstractController
     )]
     #[OA\Tag(name: 'Products')]
     public function put(
-        Product $currentProduct,
-        Request $request,
+        #[MapEntity(id: 'id')] Product $currentProduct,
+        #[MapRequestPayload()] ProductDTO $productDTO,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         ValidatorInterface $validator,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /** @var Product $newProduct */
-        $newProduct = $serializer->deserialize(
-            $request->getContent(),
-            Product::class,
-            'json'
-        );
-
-        $currentProduct->setName($newProduct->getName());
-        $currentProduct->setBrand($newProduct->getBrand());
-        $currentProduct->setDescription($newProduct->getDescription());
-        $currentProduct->setReference($newProduct->getReference());
+        $context = SerializationContext::create()->setGroups(['productDetail']);
+        if (null !== $productDTO->name) {
+            $currentProduct->setName($productDTO->name);
+        }
+        if (null !== $productDTO->brand) {
+            $currentProduct->setBrand($productDTO->brand);
+        }
+        if (null !== $productDTO->description) {
+            $currentProduct->setDescription($productDTO->description);
+        }
+        if (null !== $productDTO->reference) {
+            $currentProduct->setReference($productDTO->reference);
+        }
 
         $errors = $validator->validate($currentProduct);
         if ($errors->count() > 0) {
             return new JsonResponse(
-                $serializer->serialize($errors, 'json'),
+                $serializer->serialize($errors, 'json', $context),
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
@@ -268,7 +269,7 @@ class ProductController extends AbstractController
     )]
     #[OA\Tag(name: 'Products')]
     public function delete(
-        Product $product,
+        #[MapEntity(id: 'id')] Product $product,
         EntityManagerInterface $em,
         TagAwareCacheInterface $cache
     ): JsonResponse {

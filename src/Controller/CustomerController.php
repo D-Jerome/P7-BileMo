@@ -7,18 +7,20 @@ namespace App\Controller;
 use App\Entity\Customer;
 use App\Entity\User;
 use App\Repository\CustomerRepository;
+use App\Request\DTO\CustomerDTO;
 use App\Request\DTO\PaginationDTO;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -60,14 +62,11 @@ class CustomerController extends AbstractController
     #[IsGranted('ROLE_COMPANY_ADMIN', message: 'You are not allowed to access')]
     public function collection(
         #[MapRequestPayload()] PaginationDTO $paginationDTO,
+        #[CurrentUser] User $connectedUser,
         CustomerRepository $customerRepository,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
         $context = SerializationContext::create()->setGroups(['customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             $idCache = 'getAllCustomers-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
@@ -116,14 +115,11 @@ class CustomerController extends AbstractController
     )]
     #[OA\Tag(name: 'Customers')]
     public function item(
+        #[CurrentUser] User $connectedUser,
         Customer $customer,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /**
-         * @var User $connectedUser
-         */
-        $connectedUser = $this->getUser();
         $context = SerializationContext::create()->setGroups(['customerDetail', 'userList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             $idCache = 'getCustomer-'.$customer->getId();
@@ -183,23 +179,23 @@ class CustomerController extends AbstractController
     )]
     #[OA\Tag(name: 'Customers')]
     public function post(
-        Request $request,
+        #[MapRequestPayload()] CustomerDTO $customerDTO,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         UrlGeneratorInterface $urlGenerator,
         ValidatorInterface $validator,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /** @var Customer $customer */
-        $customer = $serializer->deserialize($request->getContent(), Customer::class, 'json');
         $context = SerializationContext::create()->setGroups(['customerDetail']);
-        $errors = $validator->validate($customer);
+        $errors = $validator->validate($customerDTO);
         if ($errors->count() > 0) {
             return new JsonResponse(
                 $serializer->serialize($errors, 'json'),
                 JsonResponse::HTTP_BAD_REQUEST
             );
         }
+        $customer = new Customer();
+        $customer->setName($customerDTO->name);
 
         $em->persist($customer);
 
@@ -241,21 +237,14 @@ class CustomerController extends AbstractController
     )]
     #[OA\Tag(name: 'Customers')]
     public function put(
-        Customer $currentCustomer,
-        Request $request,
+        #[MapEntity(id: 'id')] Customer $currentCustomer,
+        #[MapRequestPayload()] CustomerDTO $customerDTO,
         SerializerInterface $serializer,
         EntityManagerInterface $em,
         ValidatorInterface $validator,
         TagAwareCacheInterface $cache
     ): JsonResponse {
-        /** @var Customer $newCustomer */
-        $newCustomer = $serializer->deserialize(
-            $request->getContent(),
-            Customer::class,
-            'json'
-        );
-
-        $currentCustomer->setName($newCustomer->getName());
+        $currentCustomer->setName($customerDTO->name);
 
         $errors = $validator->validate($currentCustomer);
         if ($errors->count() > 0) {
@@ -290,7 +279,7 @@ class CustomerController extends AbstractController
     )]
     #[OA\Tag(name: 'Customers')]
     public function delete(
-        Customer $customer,
+        #[MapEntity(id: 'id')] Customer $customer,
         EntityManagerInterface $em,
         TagAwareCacheInterface $cache
     ): JsonResponse {

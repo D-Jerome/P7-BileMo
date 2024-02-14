@@ -1,5 +1,7 @@
 # BileMo - Sélection de téléphones mobiles haut de gamme
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/34a044cc499b4d5d960366d5453491c1)](https://app.codacy.com/gh/D-Jerome/P7-BileMo?utm_source=github.com&utm_medium=referral&utm_content=D-Jerome/P7-BileMo&utm_campaign=Badge_Grade)
+
 ## Presentation du projet
 
 API REST BileMO réalisé avec [**Symfony 6.4 lts**](https://symfony.com/).

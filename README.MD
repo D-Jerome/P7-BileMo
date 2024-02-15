@@ -2,7 +2,7 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/764c7844c51947ec8949a90f79bbf6e6)](https://app.codacy.com/gh/D-Jerome/P7-BileMo/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/ca5bb6834e071a4d097b/maintainability)](https://codeclimate.com/github/D-Jerome/P7-BileMo/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/f6ddd74a7b4ce2314581/maintainability)](https://codeclimate.com/github/D-Jerome/P7-BileMo/maintainability)
 
 ## Presentation du projet
 

@@ -85,7 +85,6 @@ Lancer le serveur symfony
 
 ### Les endpoints suivants nécessitent un rôle administrateur :
 
-```
 <span style="color:#78bc61">POST</span>
 `/api/customers`
 
@@ -94,11 +93,9 @@ Lancer le serveur symfony
 
 <span style="color:#ed6a5a">DELETE</span>
 `/api/customers/{id}`
-```
 
 ### Les endpoints suivants nécessitent un rôle administrateur de la compagnie(customer) :
 
-```
 <span style="color:#78bc61">POST</span>
 `/api/users`
 
@@ -107,11 +104,10 @@ Lancer le serveur symfony
 
 <span style="color:#3caab5">DELETE</span>
 `/api/users/{id}`
-```
 
 ### Les endpoints suivants nécessitent un rôle utilisateur de la compagnie(user) :
 
-```
+
 <span style="color:#3caab5">GET</span>
 `/api/products`
 
@@ -132,4 +128,4 @@ x comptes utilisateurs aléatoirement associés au compagnie(customer)
 La documentation est disponible au lien suivant :
 
 `/api/doc`
-```
+

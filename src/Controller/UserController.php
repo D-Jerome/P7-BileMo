@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Request\DTO\PaginationDTO;
 use App\Request\DTO\UserDTO;
+use App\Service\CacheService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -68,35 +69,17 @@ class UserController extends AbstractController
     )]
     #[OA\Tag(name: 'Users')]
     public function collection(
-        #[MapRequestPayload()] PaginationDTO $paginationDTO,
         #[CurrentUser] User $connectedUser,
         UserRepository $userRepository,
-        SerializerInterface $serializer,
-        TagAwareCacheInterface $cache
+        CacheService $cacheService
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
-            $idCache = 'getAllUsers-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
-
-            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($userRepository, $paginationDTO, $serializer, $context) {
-                $item->tag('allUsersCache');
-                $item->expiresAfter(15);
-                $userList = $userRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
-
-                return $serializer->serialize($userList, 'json', $context);
-            });
+            $jsonUserList = $cacheService->getAllData('user', $userRepository, $context );
         } else {
             Assert::notNull($connectedUser->getCustomer());
 
-            $idCache = 'getAllUsersByCustomer-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
-
-            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($userRepository, $paginationDTO, $serializer, $context, $connectedUser) {
-                $item->tag('allUsersByCustomerCache');
-                $item->expiresAfter(15);
-                $userList = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $paginationDTO->page, $paginationDTO->limit);
-
-                return $serializer->serialize($userList, 'json', $context);
-            });
+            $jsonUserList = $cacheService->getAllDataByCustomer('user', $userRepository, $context, $connectedUser);
         }
 
         return new JsonResponse($jsonUserList, JsonResponse::HTTP_OK, [], true);
@@ -127,18 +110,11 @@ class UserController extends AbstractController
     public function item(
         #[CurrentUser] User $connectedUser,
         #[MapEntity(id: 'id')] User $user,
-        SerializerInterface $serializer,
-        TagAwareCacheInterface $cache
+        CacheService $cacheService
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['userDetail', 'customerList']);
-        $idCache = 'getUser-'.$user->getId();
+        $jsonUser = $cacheService->getUniqueData('user', $user, $context);
 
-        $jsonUser = $cache->get($idCache, function (ItemInterface $item) use ($user, $serializer, $context) {
-            $item->tag('UserCache');
-            $item->expiresAfter(15);
-
-            return $serializer->serialize($user, 'json', $context);
-        });
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             return new JsonResponse(
                 $jsonUser,
@@ -192,7 +168,7 @@ class UserController extends AbstractController
         UrlGeneratorInterface $urlGenerator,
         ValidatorInterface $validator,
         UserPasswordHasherInterface $userPasswordHasher,
-        TagAwareCacheInterface $cache
+        CacheService $cacheService
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['userDetail']);
         // /** @var User $user */
@@ -230,7 +206,7 @@ class UserController extends AbstractController
         }
 
         $em->flush();
-        $cache->invalidateTags(['UserCache']);
+        $cacheService->invalidate(['UserCache']);
 
         return new JsonResponse(
             $serializer->serialize(
@@ -274,7 +250,7 @@ class UserController extends AbstractController
         EntityManagerInterface $em,
         ValidatorInterface $validator,
         UserPasswordHasherInterface $userPasswordHasher,
-        TagAwareCacheInterface $cache
+        CacheService $cacheService
     ): JsonResponse {
         if ($connectedUser->getCustomer() !== $currentUser->getCustomer()) {
             return new JsonResponse(
@@ -313,7 +289,7 @@ class UserController extends AbstractController
             );
         }
         $em->flush();
-        $cache->invalidateTags(['UserCache']);
+        $cacheService->invalidate(['UserCache']);
 
         return new JsonResponse(
             null,
@@ -344,7 +320,7 @@ class UserController extends AbstractController
         #[CurrentUser] User $connectedUser,
         #[MapEntity(id: 'id')] User $user,
         EntityManagerInterface $em,
-        TagAwareCacheInterface $cache
+        CacheService $cacheService
     ): JsonResponse {
         if ($connectedUser->getCustomer() !== $user->getCustomer()) {
             return new JsonResponse(
@@ -355,7 +331,7 @@ class UserController extends AbstractController
 
         $em->remove($user);
         $em->flush();
-        $cache->invalidateTags(['UserCache']);
+        $cacheService->invalidate(['UserCache']);
 
         return new JsonResponse(
             null,

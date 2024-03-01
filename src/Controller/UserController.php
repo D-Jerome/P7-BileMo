@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Request\DTO\PaginationDTO;
 use App\Request\DTO\UserDTO;
+use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -72,30 +73,33 @@ class UserController extends AbstractController
         #[CurrentUser] User $connectedUser,
         UserRepository $userRepository,
         SerializerInterface $serializer,
-        TagAwareCacheInterface $cache
+        TagAwareCacheInterface $cache,
+        PaginationService $paginationService,
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['userList', 'customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             $idCache = 'getAllUsers-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
 
-            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($userRepository, $paginationDTO, $serializer, $context) {
+            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($paginationService, $userRepository, $paginationDTO, $serializer, $context) {
                 $item->tag('allUsersCache');
                 $item->expiresAfter(15);
-                $userList = $userRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
+                $userList = $userRepository->findAllQuery();
+                $pagedUserList = $paginationService->paginate($userList, $paginationDTO);
 
-                return $serializer->serialize($userList, 'json', $context);
+                return $serializer->serialize($pagedUserList->getQuery()->getResult(), 'json', $context);
             });
         } else {
             Assert::notNull($connectedUser->getCustomer());
 
             $idCache = 'getAllUsersByCustomer-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
 
-            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($userRepository, $paginationDTO, $serializer, $context, $connectedUser) {
+            $jsonUserList = $cache->get($idCache, function (ItemInterface $item) use ($paginationService, $userRepository, $paginationDTO, $serializer, $context, $connectedUser) {
                 $item->tag('allUsersByCustomerCache');
                 $item->expiresAfter(15);
-                $userList = $userRepository->findByWithPagination(['customer' => $connectedUser->getCustomer()], $paginationDTO->page, $paginationDTO->limit);
+                $userList = $userRepository->findByQuery(['customer' => $connectedUser->getCustomer()]);
+                $pagedUserList = $paginationService->paginate($userList, $paginationDTO);
 
-                return $serializer->serialize($userList, 'json', $context);
+                return $serializer->serialize($pagedUserList->getQuery()->getResult(), 'json', $context);
             });
         }
 

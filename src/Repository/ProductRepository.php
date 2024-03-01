@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -25,33 +26,24 @@ class ProductRepository extends ServiceEntityRepository
 
     /**
      * [Description for findAllWithPagination].
-     *
-     * @return array<int,Product>
      */
-    public function findAllWithPagination(int $page, int $limit): array
+    public function findAllQuery(): Query
     {
         return $this->createQueryBuilder('p')
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit)
             ->getQuery()
-            ->getResult();
+        ;
     }
 
     /**
      * [Description for findByWithPagination].
-     *
-     * @return array<int,Product>
      */
-    public function findByWithPagination(string $brand, int $page, int $limit): array
+    public function findByQuery(string $brand): Query
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.brand = :brand')
             ->setParameter('brand', $brand)
             ->orderBy('p.id', 'ASC')
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit)
             ->getQuery()
-            ->getResult()
         ;
     }
 }

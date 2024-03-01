@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Customer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -25,15 +26,11 @@ class CustomerRepository extends ServiceEntityRepository
 
     /**
      * [Description for findAllWithPagination].
-     *
-     * @return array<int,Customer>
      */
-    public function findAllWithPagination(int $page, int $limit): array
+    public function findAllQuery(): Query
     {
         return $this->createQueryBuilder('c')
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit)
             ->getQuery()
-            ->getResult();
+        ;
     }
 }

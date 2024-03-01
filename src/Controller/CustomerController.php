@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Repository\CustomerRepository;
 use App\Request\DTO\CustomerDTO;
 use App\Request\DTO\PaginationDTO;
+use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -74,18 +75,21 @@ class CustomerController extends AbstractController
         #[CurrentUser] User $connectedUser,
         CustomerRepository $customerRepository,
         SerializerInterface $serializer,
-        TagAwareCacheInterface $cache
+        TagAwareCacheInterface $cache,
+        PaginationService $paginationService
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['customerList']);
         if ($connectedUser->getRoles() === ['ROLE_ADMIN']) {
             $idCache = 'getAllCustomers-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
 
-            $jsonCustomerList = $cache->get($idCache, function (ItemInterface $item) use ($customerRepository, $paginationDTO, $serializer, $context) {
+            $jsonCustomerList = $cache->get($idCache, function (ItemInterface $item) use ($paginationService, $customerRepository, $paginationDTO, $serializer, $context) {
                 $item->tag('customerCache');
                 $item->expiresAfter(15);
-                $customerList = $customerRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
 
-                return $serializer->serialize($customerList, 'json', $context);
+                $customerList = $customerRepository->findAllQuery();
+                $pagedCustomerList = $paginationService->paginate($customerList, $paginationDTO);
+
+                return $serializer->serialize($pagedCustomerList->getQuery()->getResult(), 'json', $context);
             });
         } else {
             Assert::notNull($connectedUser->getCustomer());

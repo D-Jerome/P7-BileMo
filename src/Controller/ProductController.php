@@ -9,6 +9,7 @@ use App\Repository\ProductRepository;
 use App\Request\DTO\FilterDTO;
 use App\Request\DTO\PaginationDTO;
 use App\Request\DTO\ProductDTO;
+use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -77,29 +78,32 @@ class ProductController extends AbstractController
         #[MapRequestPayload()] FilterDTO $filterDTO,
         ProductRepository $productRepository,
         SerializerInterface $serializer,
-        TagAwareCacheInterface $cache
+        TagAwareCacheInterface $cache,
+        PaginationService $paginationService
     ): JsonResponse {
         $context = SerializationContext::create()->setGroups(['productList']);
 
         if (null === $filterDTO->brand) {
             $idCache = 'getAllProducts-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
 
-            $jsonProductList = $cache->get($idCache, function (ItemInterface $item) use ($productRepository, $paginationDTO, $serializer, $context) {
+            $jsonProductList = $cache->get($idCache, function (ItemInterface $item) use ($paginationService, $productRepository, $paginationDTO, $serializer, $context) {
                 $item->tag('productCache');
                 $item->expiresAfter(15);
-                $productList = $productRepository->findAllWithPagination($paginationDTO->page, $paginationDTO->limit);
+                $productList = $productRepository->findAllQuery();
+                $pagedProductList = $paginationService->paginate($productList, $paginationDTO);
 
-                return $serializer->serialize($productList, 'json', $context);
+                return $serializer->serialize($pagedProductList->getQuery()->getResult(), 'json', $context);
             });
         } else {
             $idCache = 'getBrandProducts-'.$filterDTO->brand.'-'.(string) $paginationDTO->page.'-'.(string) $paginationDTO->limit;
 
-            $jsonProductList = $cache->get($idCache, function (ItemInterface $item) use ($productRepository, $paginationDTO, $filterDTO, $serializer, $context) {
+            $jsonProductList = $cache->get($idCache, function (ItemInterface $item) use ($paginationService, $productRepository, $paginationDTO, $filterDTO, $serializer, $context) {
                 $item->tag('productCache');
                 $item->expiresAfter(15);
-                $productList = $productRepository->findByWithPagination($filterDTO->brand, $paginationDTO->page, $paginationDTO->limit);
+                $productList = $productRepository->findByQuery($filterDTO->brand);
+                $pagedProductList = $paginationService->paginate($productList, $paginationDTO);
 
-                return $serializer->serialize($productList, 'json', $context);
+                return $serializer->serialize($pagedProductList->getQuery()->getResult(), 'json', $context);
             });
         }
         if (2 == strlen($jsonProductList)) {
